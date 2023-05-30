@@ -26,7 +26,7 @@ class Bird(pg.sprite.Sprite):
         self.rect.centerx = x
         self.rect.bottom = 500
        
-    def update(self,screen: pg.Surface, mode: int, on_grd: int,bird_h: int):
+    def update(self,screen: pg.Surface, mode: int, on_grd: bool,bird_h: int):
         """
         こうかとんの行動と描画を設定
         引数1 screen: 描画の時につかうpg.Surface
@@ -37,11 +37,9 @@ class Bird(pg.sprite.Sprite):
         if mode == 0:
             if self.mode == 0:
                 screen.blit(self.img,self.rect)
-            if self.mode == 1:
+            elif self.mode == 1:
                 screen.blit(pg.transform.flip(self.img,True,False),self.rect)
-            if on_grd == 0:
-                pass
-            if on_grd == 1:
+            if on_grd:
                 if self.jump == 1:
                     self.rect.bottom -=5  # 5づつ上昇する
                     self.j_h = bird_h - 150  # こうかとんのbottomから150上の位置まで飛ぶようにする
@@ -77,7 +75,7 @@ class Background:
         self.bg_img_fl = pg.transform.flip(self.bg_img,True,False)
         screen.blit(self.bg_img_fl,[-800,0])
 
-    def update(self, screen: pg.Surface, mode: int, wall: int):
+    def update(self, screen: pg.Surface, mode: int, wall: bool):
         """
         移動に応じた更新
         引数1 screen: 描画の時につかうpg.Surface
@@ -89,7 +87,7 @@ class Background:
             screen.blit(self.bg_img,[800-self.x,0])
             screen.blit(self.bg_img_fl,[2400-self.x,0])
             screen.blit(self.bg_img_fl,[-800-self.x,0])
-        elif mode == 1 or mode == 2 or wall == 1:  # 背景を移動しないように設定
+        elif mode == 1 or mode == 2 or wall:  # 背景を移動しないように設定
             screen.blit(self.bg_img,[800-self.x,0])
             screen.blit(self.bg_img_fl,[2400-self.x,0])
             screen.blit(self.bg_img_fl,[-800-self.x,0])
@@ -244,21 +242,22 @@ def main():
  
     tmr = 0  # ゲームが終わった際の描画時間用タイマー
     mode = 0
-    on_grd = 0
+    on_grd = False
     bird_h = 0
-    wall = 0
+    wall = False
     clock = pg.time.Clock()
     
     while True:
         vx = 0
-        on_grd = 1
+        on_grd = True
+        key_lst = pg.key.get_pressed()
         for  event in pg.event.get():
             if event.type == pg.QUIT: return
-        if event.type == pg.KEYDOWN and event.key == pg.K_RIGHT and mode == 0:  # 十字キー右を押した際の処理
+        if key_lst[pg.K_RIGHT] and mode == 0:  # 十字キー右を押した際の処理
             bird.mode = 0
             bg.x += 5
             vx = -5
-        if event.type == pg.KEYDOWN and event.key == pg.K_LEFT and mode == 0:  # 十字キー左を押した際の処理
+        if key_lst[pg.K_LEFT] and mode == 0:  # 十字キー左を押した際の処理
             bird.mode = 1
             bg.x -= 5
             if bg.x > 0 :
@@ -270,21 +269,22 @@ def main():
             vx = 0
         for ground in pg.sprite.spritecollide(bird, grds, False):  # こうかとんが接地しているときの処理
             if bird.rect.bottom == ground.rect.top + 1:
-                on_grd = 0
+                on_grd = False
             if bird.rect.bottom != ground.rect.top + 1:
-                if bird.rect.right - (bird.rect.right % 10) == ground.rect.left:
-                    wall = 1
-                    if event.type == pg.KEYDOWN and event.key == pg.K_RIGHT and mode == 0:
+                #
+                if bird.rect.right - (bird.rect.right % 10) <= ground.rect.left:
+                    wall = True
+                    if key_lst[pg.K_RIGHT] and mode == 0:
                         bg.x -= 5
                         vx = 0
                         mode = 0
                 if bird.rect.left + (10 - bird.rect.left % 10) == ground.rect.right:
-                    wall = 1
-                    if event.type == pg.KEYDOWN and event.key == pg.K_LEFT and mode == 0:
+                    wall = True
+                    if key_lst[pg.K_LEFT] and mode == 0:
                         bg.x += 5
                         vx = 0
                         mode = 0
-        if on_grd == 0 and event.type == pg.KEYDOWN and event.key == pg.K_UP:  # 十字キー上を押したときの処理
+        if not on_grd and key_lst[pg.K_UP]:  # 十字キー上を押したときの処理
             bird.jump = 1
             bird.rect.bottom -= 5
             bird_h = bird.rect.bottom
