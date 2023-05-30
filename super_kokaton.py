@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 import random
+import time
 
 WIDTH = 800  # ディスプレイの横幅
 HEIGHT = 600  # ディスプレイの縦幅
@@ -55,10 +56,16 @@ class Bird(pg.sprite.Sprite):
             self.num = 8  # こうかとんの画像を8番に変更
             self.img = pg.image.load(f"ex05/fig/{self.num}.png")
             screen.blit(self.img,self.rect)
+            font1 = pg.font.SysFont(None, 80)
+            text1 = font1.render("GAME OVER",True,(0,0,0))  
+            screen.blit(text1, (240,200)) # GAME OVER テキストを表示
         elif mode == 2:
             self.num = 6  # こうかとんの画像を6番に変更
             self.img = pg.image.load(f"ex05/fig/{self.num}.png")
-            screen.blit(self.img,self.rect)
+            font1 = pg.font.SysFont(None, 80)
+            text1 = font1.render("GAME CLEAR",True,(255,215,0)) 
+            screen.blit(self.img,self.rect) 
+            screen.blit(text1, (220,200)) # GAMECLEAテキストを表示
 
 
 class Background:
@@ -143,7 +150,7 @@ class Goal(pg.sprite.Sprite):
         self.rect = self.g_img.get_rect()
         self.rect.centerx = 3200
         self.rect.bottom = 500
-        screen.blit(self.g_img,self.rect)
+        screen.blit(self.g_img, self.rect)
 
     def update(self, screen: pg.Surface, bg: Background, vx: int):
         """
@@ -153,7 +160,7 @@ class Goal(pg.sprite.Sprite):
         引数3 vx: こうかとんの動きに応じたx座標の移動速度
         """
         self.rect.move_ip(vx,0)
-        screen.blit(self.g_img,self.rect)
+        screen.blit(self.g_img, self.rect)
 
 
 class Ground(pg.sprite.Sprite):
@@ -202,6 +209,9 @@ class Score:
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, 50
+        self.whi = 700
+        self.hei = 500
+        self.rectcenter = self.whi, self.hei
 
     def update(self, screen:pg.Surface):
         """
@@ -210,6 +220,77 @@ class Score:
         """
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
+
+
+class TitleScreen:
+    """
+    # タイトル画面の背景色やテキストの処理
+    """
+    def __init__(self,screen_width, screen_height):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.background_color = (175,238,238)  # 背景色
+        self.text_color = (0,128,0) # テキストの色
+        self.title_font = pg.font.Font(None, 100) # メインタイトルの設定
+        self.subtitle_font = pg.font.Font(None, 50) # サブタイトルの設定
+        self.title_text = self.title_font.render("Super Kokaton", True, self.text_color) 
+        self.subtitle_text = self.subtitle_font.render("Press Space to Start", True, self.text_color) 
+
+    def show(self,screen):
+        screen.fill(self.background_color)
+        screen.blit(self.title_text, (160,200)) # メインタイトルの描画
+        screen.blit(self.subtitle_text, (250,300)) # サブタイトルの描画
+
+
+class Time():
+    """
+    タイムに関するクラス
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.time = 60 #時間制限
+        self.time_60 = 0
+        self.image = self.font.render(f"Time: {self.time}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = WIDTH - 125, 50 # Time表示位置
+
+    def time_up(self, add: int, mode: int):
+        self.time_60 += add 
+        if self.time_60 == 60: # カウントが60になったら
+            self.time_60 = 0 
+            if mode == 0:
+                self.time -= 1 
+
+    def update(self, screen: pg.Surface):
+        if self.time <= 10:
+            self.color = (255, 0, 0)
+        self.image = self.font.render(f"Time: {self.time}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
+class Coin(pg.sprite.Sprite):
+    """
+    コインに関するクラス
+    """
+    def __init__(self, screen: pg.Surface, c_x: int, c_y: int):
+        """
+        引数1 c_x:コインのx座標
+        引数2 x_y:コインのy座標
+        """
+        super().__init__()
+        self.c_x = c_x
+        self.c_y = c_y
+        self.coin_img = pg.transform.rotozoom(pg.image.load(f"ex05/fig/food_daizu_meet.png"), 0, 0.1)
+        self.coin_immg = pg.image
+        self.rect = self.coin_img.get_rect()
+        self.rect.centerx = self.c_x
+        self.rect.centery = self.c_y
+        screen.blit(self.coin_img, self.rect)
+    
+    def update(self, screen: pg.Surface, vx: int):
+        self.rect.move_ip(vx, 0)
+        screen.blit(self.coin_img, self.rect)
 
 
 def main():
@@ -222,7 +303,9 @@ def main():
     gls = pg.sprite.Group()
     grws = pg.sprite.Group()
     grds = pg.sprite.Group()
+    coins = pg.sprite.Group()
     scr = Score()
+    time = Time()
 
     for i in range(4):
         enes.add(Enemy(screen, i * 200 + 1000))
@@ -239,6 +322,8 @@ def main():
     grds.add(grd4)
     grd5 = Ground(screen, 2800, 2850, 101)
     grds.add(grd5)
+    for i in range(7):
+        coins.add(Coin(screen,i*400+500,300))
  
     tmr = 0  # ゲームが終わった際の描画時間用タイマー
     mode = 0
@@ -246,6 +331,8 @@ def main():
     bird_h = 0
     wall = False
     clock = pg.time.Clock()
+    game_state = 0
+    title_screen = TitleScreen(WIDTH,HEIGHT)
     
     while True:
         vx = 0
@@ -253,66 +340,85 @@ def main():
         key_lst = pg.key.get_pressed()
         for  event in pg.event.get():
             if event.type == pg.QUIT: return
-        if key_lst[pg.K_RIGHT] and mode == 0:  # 十字キー右を押した際の処理
-            bird.mode = 0
-            bg.x += 5
-            vx = -5
-        if key_lst[pg.K_LEFT] and mode == 0:  # 十字キー左を押した際の処理
-            bird.mode = 1
-            bg.x -= 5
-            if bg.x > 0 :
-                vx = 5
-        if bg.x <= 0:  # 初期値より左にはいけないような処理
-            bg.x = 0
-        if bird.rect.centerx >= gl.rect.centerx:  # ゴールより右にいけないような処理
-            bg.x = 3000
-            vx = 0
-        for ground in pg.sprite.spritecollide(bird, grds, False):  # こうかとんが接地しているときの処理
-            if bird.rect.bottom == ground.rect.top + 1:
-                on_grd = False
-            if bird.rect.bottom != ground.rect.top + 1:
-                #
-                if bird.rect.right - (bird.rect.right % 10) <= ground.rect.left:
-                    wall = True
-                    if key_lst[pg.K_RIGHT] and mode == 0:
-                        bg.x -= 5
-                        vx = 0
-                        mode = 0
-                if bird.rect.left + (10 - bird.rect.left % 10) == ground.rect.right:
-                    wall = True
-                    if key_lst[pg.K_LEFT] and mode == 0:
-                        bg.x += 5
-                        vx = 0
-                        mode = 0
-        if not on_grd and key_lst[pg.K_UP]:  # 十字キー上を押したときの処理
-            bird.jump = 1
-            bird.rect.bottom -= 5
-            bird_h = bird.rect.bottom
-        for ene in pg.sprite.spritecollide(bird, enes, False):  # こうかとんと敵が接触したときの処理
-            if bird.rect.bottom <= ene.rect.top + 5:  # 上から踏んだ時に踏んだ敵を消しスコアを10アップ
-                enes.remove(ene)
-                scr.score += 10
-                pass
-            else:  # 上以外からぶつかった時ゲームオーバーになり、残り描画時間設定用のtmrが回り始める
+            if game_state == 0:
+                title_screen.show(screen)
+                pg.display.update()
+            if key_lst[pg.K_SPACE]:
+                game_state = 1
+        if game_state == 1:
+            if key_lst[pg.K_RIGHT] and mode == 0:  # 十字キー右を押した際の処理
+                bird.mode = 0
+                bg.x += 5
+                vx = -5
+            if key_lst[pg.K_LEFT] and mode == 0:  # 十字キー左を押した際の処理
+                bird.mode = 1
+                bg.x -= 5
+                if bg.x > 0 :
+                    vx = 5
+            if bg.x <= 0:  # 初期値より左にはいけないような処理
+                bg.x = 0
+            if bird.rect.centerx >= gl.rect.centerx:  # ゴールより右にいけないような処理
+                bg.x = 3000
+                vx = 0
+            for ground in pg.sprite.spritecollide(bird, grds, False):  # こうかとんが接地しているときの処理
+                if bird.rect.bottom == ground.rect.top + 1:
+                    on_grd = 0
+                if bird.rect.bottom != ground.rect.top + 1:
+                    if bird.rect.right - (bird.rect.right % 10) == ground.rect.left:
+                        wall = 1
+                        if key_lst[pg.KEYDOWN] and key_lst[pg.K_RIGHT] and mode == 0:
+                            bg.x -= 5
+                            vx = 0
+                            mode = 0
+                    if bird.rect.left + (10 - bird.rect.left % 10) == ground.rect.right:
+                        wall = 1
+                        if event.type == pg.KEYDOWN and event.key == pg.K_LEFT and mode == 0:
+                            bg.x += 5
+                            vx = 0
+                            mode = 0
+            if on_grd == 0 and event.type == pg.KEYDOWN and event.key == pg.K_UP:  # 十字キー上を押したときの処理
+                bird.jump = 1
+                bird.rect.bottom -= 5
+                bird_h = bird.rect.bottom
+            for ene in pg.sprite.spritecollide(bird, enes, False):  # こうかとんと敵が接触したときの処理
+                if bird.rect.bottom <= ene.rect.top + 5:  # 上から踏んだ時に踏んだ敵を消しスコアを10アップ
+                    enes.remove(ene)
+                    scr.score += 10
+                    pass
+                else:  # 上以外からぶつかった時ゲームオーバーになり、残り描画時間設定用のtmrが回り始める
+                    tmr += 1
+                    mode = 1
+            if bird.rect.top > 600:  # 描画範囲より下に行った場合の処理
+                font1 = pg.font.SysFont(None, 80)
+                text1 = font1.render("GAME OVER",True,(0,0,0))  
+                screen.blit(text1, (240,200)) # GAME OVER テキストを表示
+                pg.display.update()
+                time.sleep(1)
+                return
+            for coin in pg.sprite.spritecollide(bird, coins, True):
+                scr.score += 50
+            for goal in pg.sprite.spritecollide(bird,gls,False):  # こうかとんがゴールに接触したときの処理
                 tmr += 1
-                mode = 1
-        for goal in pg.sprite.spritecollide(bird,gls,False):  # こうかとんがゴールに接触したときの処理
-            tmr += 1
-            mode = 2
-            if tmr == 1:
-                scr.score += 100
-        if tmr >= 150:  # ゲーム終了から150カウント進んだら終了するための処理
-            return
-        if bird.rect.top > 600:  # 描画範囲より下に行った場合の処理
-            return
-        bg.update(screen, mode, wall)
-        grds.update(screen, bg, vx)
-        bird.update(screen, mode, on_grd, bird_h)
-        enes.update(screen, vx, mode)
-        gls.update(screen, bg, vx)
-        scr.update(screen)
-        pg.display.update()
-        clock.tick(60)
+                mode = 2
+                if tmr == 1:
+                    scr.score += 100
+            if tmr >= 150:  # ゲーム終了から150カウント進んだら終了するための処理
+                return
+            if bird.rect.top > 600:  # 描画範囲より下に行った場合の処理
+                return
+            time.time_up(1, mode)
+            bg.update(screen, mode, wall)
+            grds.update(screen, bg, vx)
+            bird.update(screen, mode, on_grd, bird_h)
+            enes.update(screen, vx, mode)
+            gls.update(screen, bg, vx)
+            scr.update(screen)
+            time.update(screen)
+            coins.update(screen, vx)
+        
+            pg.display.update()
+            clock.tick(60)
+
 
 if __name__ == "__main__":
     pg.init()
