@@ -239,8 +239,8 @@ class TitleScreen:
 
     def show(self,screen):
         screen.fill(self.background_color)
-        screen.blit(self.title_text, (160,200)) # メインタイトルの描画
-        screen.blit(self.subtitle_text, (250,300)) # サブタイトルの描画
+        screen.blit(self.title_text, (150,200)) # メインタイトルの描画
+        screen.blit(self.subtitle_text, (240,300)) # サブタイトルの描画
 
 
 class Time():
@@ -321,7 +321,7 @@ def main():
     grds.add(grd3)
     grd4 = Ground(screen, 2400, 2500, 201)
     grds.add(grd4)
-    grd5 = Ground(screen, 2800, 2850, 101)
+    grd5 = Ground(screen, 2750, 2850, 101)
     grds.add(grd5)
     for i in range(7):
         coins.add(Coin(screen,i*400+500,300))
@@ -403,19 +403,19 @@ def main():
                 font1 = pg.font.SysFont(None, 80)
                 text1 = font1.render("GAME OVER",True,(0,0,0))  
                 screen.blit(text1, (240,200)) # GAME OVER テキストを表示
-                pg.display.update()
-                time.sleep(1)
-                return
+                tmr += 1
+                mode = 1
             for coin in pg.sprite.spritecollide(bird, coins, True):
                 scr.score += 50
+            if time.time <= 0:
+                tmr += 1
+                mode = 1
             for goal in pg.sprite.spritecollide(bird,gls,False):  # こうかとんがゴールに接触したときの処理
                 tmr += 1
                 mode = 2
                 if tmr == 1:
                     scr.score += 100
             if tmr >= 150:  # ゲーム終了から150カウント進んだら終了するための処理
-                return
-            if bird.rect.top > 600:  # 描画範囲より下に行った場合の処理
                 return
             time.time_up(1, mode)
             bg.update(screen, mode, wall)
