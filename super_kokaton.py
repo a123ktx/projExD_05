@@ -26,6 +26,7 @@ class Bird(pg.sprite.Sprite):
         self.rect = self.img.get_rect()
         self.rect.centerx = x
         self.rect.bottom = 500
+        self.life = 2
        
     def update(self,screen: pg.Surface, mode: int, on_grd: bool,bird_h: int):
         """
@@ -213,12 +214,12 @@ class Score:
         self.hei = 500
         self.rectcenter = self.whi, self.hei
 
-    def update(self, screen:pg.Surface):
+    def update(self, screen:pg.Surface, zanki):
         """
         その時のスコアに応じた更新
         引数1 screen: 描画の時につかうpg.Surface
         """
-        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+        self.image = self.font.render(f"Score: {self.score} Zanki : {zanki}", 0, self.color)
         screen.blit(self.image, self.rect)
 
 
@@ -326,6 +327,7 @@ def main():
         coins.add(Coin(screen,i*400+500,300))
  
     tmr = 0  # ゲームが終わった際の描画時間用タイマー
+    life_tmr = 0
     mode = 0
     on_grd = False
     bird_h = 0
@@ -386,8 +388,17 @@ def main():
                     scr.score += 10
                     pass
                 else:  # 上以外からぶつかった時ゲームオーバーになり、残り描画時間設定用のtmrが回り始める
-                    tmr += 1
-                    mode = 1
+                    if mode == 0:
+                        if life_tmr == 0:
+                            bird.life -= 1
+                            life_tmr = 30
+                        else:
+                            life_tmr -= 1
+                            if life_tmr < 0:
+                                life_tmr = 0
+                    if bird.life < 1:
+                        tmr += 1
+                        mode = 1
             if bird.rect.top > 600:  # 描画範囲より下に行った場合の処理
                 font1 = pg.font.SysFont(None, 80)
                 text1 = font1.render("GAME OVER",True,(0,0,0))  
@@ -412,10 +423,10 @@ def main():
             bird.update(screen, mode, on_grd, bird_h)
             enes.update(screen, vx, mode)
             gls.update(screen, bg, vx)
-            scr.update(screen)
+            scr.update(screen, bird.life)
             time.update(screen)
             coins.update(screen, vx)
-        
+
             pg.display.update()
             clock.tick(60)
 
