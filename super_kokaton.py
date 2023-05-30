@@ -362,21 +362,21 @@ def main():
                 vx = 0
             for ground in pg.sprite.spritecollide(bird, grds, False):  # こうかとんが接地しているときの処理
                 if bird.rect.bottom == ground.rect.top + 1:
-                    on_grd = 0
+                    on_grd = False
                 if bird.rect.bottom != ground.rect.top + 1:
                     if bird.rect.right - (bird.rect.right % 10) == ground.rect.left:
-                        wall = 1
-                        if key_lst[pg.KEYDOWN] and key_lst[pg.K_RIGHT] and mode == 0:
+                        wall = True
+                        if key_lst[pg.K_RIGHT] and mode == 0:
                             bg.x -= 5
                             vx = 0
                             mode = 0
                     if bird.rect.left + (10 - bird.rect.left % 10) == ground.rect.right:
-                        wall = 1
-                        if event.type == pg.KEYDOWN and event.key == pg.K_LEFT and mode == 0:
+                        wall = True
+                        if key_lst[pg.K_LEFT] and mode == 0:
                             bg.x += 5
                             vx = 0
                             mode = 0
-            if on_grd == 0 and event.type == pg.KEYDOWN and event.key == pg.K_UP:  # 十字キー上を押したときの処理
+            if not on_grd and key_lst[pg.K_UP]:  # 十字キー上を押したときの処理
                 bird.jump = 1
                 bird.rect.bottom -= 5
                 bird_h = bird.rect.bottom
